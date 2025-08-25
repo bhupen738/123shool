@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>School Management System</title>
+  <style>
+    :root{
+      --bg:#0b1021;         /* deep navy */
+      --bg-2:#101735;       /* darker panel */
+      --card:#121a3c;       /* card surface */
+      --text:#e9ecf1;       /* primary text */
+      --muted:#9aa6c2;      /* muted text */
+      --brand:#7c5cff;      /* brand accent */
+      --brand-2:#19c3ff;    /* secondary accent */
+      --success:#22c55e;    /* green */
+      --warning:#f59e0b;    /* amber */
+      --danger:#ef4444;     /* red */
+      --radius:18px;
+      --shadow:0 20px 40px rgba(0,0,0,.35);
+    }
+
+    /* Reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    img{ max-width:100%; display:block; }
+    a{ color:inherit; text-decoration:none; }
+
+    /* Animated gradient backdrop */
+    body::before{
+      content:""; position:fixed; inset:-30% -20% auto -20%; height:90vh; z-index:-1;
+      background:
+        radial-gradient(40% 60% at 10% 20%, rgba(124,92,255,.45), transparent 60%),
+        radial-gradient(50% 70% at 85% 10%, rgba(25,195,255,.35), transparent 60%),
+        radial-gradient(60% 50% at 50% 80%, rgba(255,105,180,.18), transparent 60%);
+      filter: blur(30px) saturate(120%);
+      animation: floaty 18s ease-in-out infinite alternate;
+      pointer-events:none;
+    }
+    @keyframes floaty { to { transform: translateY(-20px) translateX(10px) scale(1.03); } }
+
+    /* Header */
+    .nav-wrap{ position:sticky; top:0; z-index:50; backdrop-filter: saturate(140%) blur(8px); background: linear-gradient(180deg, rgba(11,16,33,.85), rgba(11,16,33,.55)); border-bottom:1px solid rgba(255,255,255,.06); }
+    .nav{ max-width:1200px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 20px; }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.2px; }
+    .logo{
+      width:38px; height:38px; border-radius:10px; display:grid; place-items:center; color:white;
+      background: conic-gradient(from 220deg, var(--brand), var(--brand-2), #ff6bd6, var(--brand));
+      box-shadow: 0 10px 20px rgba(124,92,255,.35);
+    }
+    .menu{ display:flex; gap:22px; align-items:center; }
+    .menu a{ opacity:.88; padding:8px 10px; border-radius:10px; }
+    .menu a:hover{ background: rgba(124,92,255,.12); opacity:1; }
+    .cta{ display:flex; gap:10px; align-items:center; }
+    .btn{ border:1px solid rgba(255,255,255,.12); background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; transition:transform .2s ease, background .2s ease, box-shadow .2s ease; }
+    .btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn.brand{ border:none; background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:#0b1021; font-weight:700; }
+
+    /* Mobile nav */
+    .burger{ display:none; flex-direction:column; gap:5px; }
+    .burger span{ width:24px; height:2px; background:#e7e7e7; border-radius:2px; }
+
+    @media (max-width: 880px){
+      .menu{ display:none; position:fixed; top:60px; right:14px; left:14px; background: #0d1430; border:1px solid rgba(255,255,255,.08); padding:14px; border-radius:14px; flex-direction:column; }
+      .menu.open{ display:flex; }
+      .burger{ display:flex; }
+      .cta{ display:none; }
+    }
+
+    /* Hero */
+    .hero{ max-width:1200px; margin:auto; padding:70px 20px 30px; display:grid; grid-template-columns: 1.05fr .95fr; gap:34px; align-items:center; }
+    .hero h1{ font-size: clamp(28px, 5vw, 58px); line-height:1.05; margin:0 0 14px; letter-spacing:.3px; }
+    .hero p{ color: var(--muted); margin:0 0 24px; font-size: clamp(14px, 1.6vw, 18px); }
+    .hero .actions{ display:flex; flex-wrap:wrap; gap:12px; }
+    .chip{ display:inline-flex; align-items:center; gap:8px; color:#d8def7; border:1px dashed rgba(124,92,255,.6); padding:8px 12px; border-radius:999px; background: rgba(124,92,255,.1); font-size:14px; }
+
+    .glassy-card{ background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .dashboard-peek{ position:relative; height:380px; padding:18px; overflow:hidden; }
+    .dash-grid{ position:absolute; inset:14px; display:grid; grid-template-columns: 1.2fr 1fr; grid-template-rows: 1fr 1fr; gap:12px; }
+    .tile{ background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:14px; position:relative; overflow:hidden; }
+    .tile .title{ font-size:14px; color:var(--muted); margin-bottom:8px; }
+    .tile .value{ font-weight:800; font-size:26px; }
+    .spark{ position:absolute; inset:auto 8px 8px auto; width:120px; height:60px; opacity:.9; }
+    .pulse{ position:absolute; inset:auto auto -20% -20%; width:300px; height:300px; background: radial-gradient(closest-side, rgba(124,92,255,.25), transparent 70%); animation:pulse 3.5s ease-in-out infinite; }
+    @keyframes pulse{ 50% { transform: scale(1.1); opacity:.8 } }
+
+    .hero-cta .btn{ padding:12px 16px; }
+
+    @media (max-width: 960px){
+      .hero{ grid-template-columns: 1fr; }
+      .dashboard-peek{ height:320px; }
+    }
+
+    /* Feature grid */
+    .section{ max-width:1200px; margin:50px auto; padding:0 20px; }
+    .section h2{ font-size: clamp(22px, 3.2vw, 34px); margin:0 0 10px; }
+    .section p.lead{ color:var(--muted); margin:0 0 24px; }
+    .grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:16px; }
+    @media (max-width: 1000px){ .grid{ grid-template-columns: repeat(2,1fr);} }
+    @media (max-width: 540px){ .grid{ grid-template-columns: 1fr;} }
+
+    .card{ background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding:18px; position:relative; overflow:hidden; transition: transform .25s ease, box-shadow .25s ease; }
+    .card:hover{ transform: translateY(-6px); box-shadow: var(--shadow); }
+    .icon{ width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); margin-bottom:10px; }
+    .card h3{ margin:6px 0 6px; font-size:18px; }
+    .card p{ margin:0; color:var(--muted); font-size:14px; }
+
+    /* Stats strip */
+    .stats{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; }
+    .stat{ background: linear-gradient(180deg, rgba(124,92,255,.12), rgba(25,195,255,.08)); border:1px solid rgba(255,255,255,.12); border-radius: var(--radius); padding:16px; text-align:center; }
+    .stat .num{ font-weight:900; font-size: clamp(22px, 4vw, 36px); }
+    .stat .lbl{ color:var(--muted); font-size:13px; }
+
+    @media (max-width: 800px){ .stats{ grid-template-columns: repeat(2,1fr);} }
+    @media (max-width: 460px){ .stats{ grid-template-columns: 1fr;} }
+
+    /* Announcements + Events */
+    .flex{ display:flex; gap:16px; }
+    .col{ flex:1; }
+    .list{ display:grid; gap:12px; }
+    .note{ display:flex; gap:12px; align-items:center; padding:12px; border-radius:14px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); }
+    .pill{ font-size:12px; padding:6px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); }
+    .pill.green{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.15); }
+    .pill.amber{ border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.15); }
+    .pill.red{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.15); }
+
+    /* Teachers (team) */
+    .team{ display:grid; grid-template-columns: repeat(3,1fr); gap:16px; }
+    @media (max-width: 1000px){ .team{ grid-template-columns: repeat(2,1fr);} }
+    @media (max-width: 620px){ .team{ grid-template-columns: 1fr;} }
+    .person{ position:relative; padding:16px; border-radius:20px; border:1px solid rgba(255,255,255,.08); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); overflow:hidden; }
+    .avatar{ width:64px; height:64px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.15); }
+    .badge{ position:absolute; top:12px; right:12px; font-size:11px; padding:6px 8px; border-radius:999px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:#0b1021; font-weight:700; }
+
+    /* Gallery */
+    .gallery{ display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; }
+    .gallery img{ border-radius:14px; border:1px solid rgba(255,255,255,.08); }
+    @media (max-width: 1000px){ .gallery{ grid-template-columns: repeat(3, 1fr);} }
+    @media (max-width: 560px){ .gallery{ grid-template-columns: repeat(2, 1fr);} }
+
+    /* CTA */
+    .cta-band{ margin:60px auto 30px; max-width:1100px; padding:24px; border-radius:22px; border:1px solid rgba(255,255,255,.10); background: linear-gradient(90deg, rgba(124,92,255,.18), rgba(25,195,255,.18)); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; }
+
+    /* Footer */
+    footer{ border-top:1px solid rgba(255,255,255,.08); margin-top:40px; }
+    .foot{ max-width:1200px; margin:auto; padding:28px 20px; display:flex; gap:16px; justify-content:space-between; flex-wrap:wrap; color:var(--muted); }
+
+    /* Reveal on scroll */
+    [data-reveal]{ opacity:0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    [data-reveal].visible{ opacity:1; transform: none; }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header / Nav -->
+  <div class="nav-wrap">
+    <nav class="nav">
+      <a href="#" class="brand">
+        <div class="logo" aria-hidden="true">🏫</div>
+        <span>EduFlow • School MS</span>
+      </a>
+      <button class="burger" aria-label="Open menu" id="burgerBtn" aria-expanded="false" aria-controls="mainMenu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="menu" id="mainMenu">
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#announcements">Announcements</a>
+        <a href="#team">Teachers</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="cta">
+        <a class="btn" href="#demo">View Demo</a>
+        <a class="btn brand" href="#get-started">Get Started</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div>
+      <span class="chip">✨ Modern • Secure • Lightning Fast</span>
+      <h1>Beautiful School Management System for smarter campuses</h1>
+      <p>Unify admissions, attendance, exams, finance, and communication in a single delightful platform. Empower admins, teachers, students, and parents—anytime, anywhere.</p>
+      <div class="actions hero-cta">
+        <a class="btn brand" href="#get-started">Launch Your Portal</a>
+        <a class="btn" href="#modules">Explore Modules</a>
+      </div>
+    </div>
+    <div class="glassy-card dashboard-peek" aria-label="Preview of dashboard">
+      <div class="pulse" aria-hidden="true"></div>
+      <div class="dash-grid">
+        <div class="tile" data-reveal>
+          <div class="title">Today Attendance</div>
+          <div class="value" data-count="96">0%</div>
+          <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+            <polyline fill="none" stroke="url(#g1)" stroke-width="3" points="0,30 10,26 20,28 30,22 40,18 50,20 60,16 70,12 80,15 90,10 100,14"/>
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1">
+                <stop offset="0%" stop-color="#7c5cff"/>
+                <stop offset="100%" stop-color="#19c3ff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="tile" data-reveal>
+          <div class="title">Pending Fees</div>
+          <div class="value">NPR 128,400</div>
+          <svg class="spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+            <polyline fill="none" stroke="#f59e0b" stroke-width="3" points="0,16 15,18 30,14 45,12 60,20 75,26 90,23 100,28"/>
+          </svg>
+        </div>
+        <div class="tile" data-reveal>
+          <div class="title">Upcoming Events</div>
+          <div class="value">Science Fair • 2d</div>
+        </div>
+        <div class="tile" data-reveal>
+          <div class="title">Messages</div>
+          <div class="value">14 new</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Feature highlights -->
+  <section id="features" class="section" data-reveal>
+    <h2>Why schools choose EduFlow</h2>
+    <p class="lead">Designed with love for administrators, teachers, students, and parents to collaborate without friction.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="icon">📊</div>
+        <h3>Unified Dashboard</h3>
+        <p>All the key metrics—attendance, fees, exams, messages—at a glance.</p>
+      </article>
+      <article class="card">
+        <div class="icon">🔐</div>
+        <h3>Bank‑Grade Security</h3>
+        <p>Role‑based access, SSO, and audit logs keep your data safe.</p>
+      </article>
+      <article class="card">
+        <div class="icon">⚡</div>
+        <h3>Superfast & Reliable</h3>
+        <p>Optimized assets and CDN delivery for a snappy experience.</p>
+      </article>
+      <article class="card">
+        <div class="icon">📱</div>
+        <h3>Mobile First</h3>
+        <p>Beautiful on phones, tablets, and desktops—no app required.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Modules -->
+  <section id="modules" class="section" data-reveal>
+    <h2>Core Modules</h2>
+    <p class="lead">Plug‑and‑play features to run your campus operations with ease.</p>
+    <div class="grid">
+      <article class="card"><div class="icon">📝</div><h3>Admissions</h3><p>Online forms, document upload, and application tracking.</p></article>
+      <article class="card"><div class="icon">🎓</div><h3>Academics</h3><p>Classes, subjects, lesson plans, and timetables.</p></article>
+      <article class="card"><div class="icon">✅</div><h3>Attendance</h3><p>One‑click daily attendance with auto notifications to parents.</p></article>
+      <article class="card"><div class="icon">🧮</div><h3>Exams & Grades</h3><p>Exam schedules, marks entry, report cards, and analytics.</p></article>
+      <article class="card"><div class="icon">💳</div><h3>Fees & Finance</h3><p>Invoices, receipts, concessions, and dues tracking.</p></article>
+      <article class="card"><div class="icon">📢</div><h3>Communication</h3><p>Notices, SMS/Email, and in‑app messaging with groups.</p></article>
+      <article class="card"><div class="icon">📚</div><h3>Library</h3><p>Catalog, issue/return, penalties, and inventory.</p></article>
+      <article class="card"><div class="icon">🚌</div><h3>Transport</h3><p>Routes, stops, GPS integration, and safety alerts.</p></article>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="section" data-reveal>
+    <div class="stats">
+      <div class="stat"><div class="num" data-count="52">0</div><div class="lbl">Active Classes</div></div>
+      <div class="stat"><div class="num" data-count="1840">0</div><div class="lbl">Students</div></div>
+      <div class="stat"><div class="num" data-count="128">0</div><div class="lbl">Teachers</div></div>
+      <div class="stat"><div class="num" data-count="98">0</div><div class="lbl">Parent Satisfaction %</div></div>
+    </div>
+  </section>
+
+  <!-- Announcements & Events -->
+  <section id="announcements" class="section" data-reveal>
+    <div class="flex">
+      <div class="col">
+        <h2>Announcements</h2>
+        <div class="list">
+          <div class="note"><span class="pill green">New</span> Final date for science exhibition submissions is <strong>Aug 30</strong>.</div>
+          <div class="note"><span class="pill amber">Reminder</span> Pay Term‑II fees by <strong>Sept 10</strong> to avoid late charges.</div>
+          <div class="note"><span class="pill red">Alert</span> Heavy rain forecast; morning shift delayed by <strong>1 hour</strong> tomorrow.</div>
+          <div class="note"><span class="pill">Info</span> Parent‑Teacher Meeting scheduled for <strong>Sept 14</strong>.</div>
+        </div>
+      </div>
+      <div class="col">
+        <h2>Upcoming Events</h2>
+        <div class="list">
+          <div class="note">🏅 <strong>Inter‑House Sports</strong> • Sept 02 • 9:00 AM</div>
+          <div class="note">🧪 <strong>Science Fair</strong> • Sept 05 • 10:30 AM</div>
+          <div class="note">🎭 <strong>Cultural Fest</strong> • Sept 21 • 11:00 AM</div>
+          <div class="note">🌱 <strong>Tree Plantation Drive</strong> • Sept 28 • 7:30 AM</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teachers -->
+  <section id="team" class="section" data-reveal>
+    <h2>Meet Our Teachers</h2>
+    <p class="lead">Experienced, compassionate, and dedicated to student success.</p>
+    <div class="team">
+      <div class="person">
+        <span class="badge">Top Mentor</span>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="avatar"><img src="https://placehold.co/128x128/png" alt="Teacher portrait"/></div>
+          <div>
+            <strong>Ms. Aarya Karki</strong>
+            <div class="muted" style="color:var(--muted); font-size:14px;">Mathematics • Grade 8–10</div>
+          </div>
+        </div>
+        <p style="margin-top:10px; color:var(--muted);">Olympiad trainer with a passion for problem‑solving and curiosity‑driven learning.</p>
+      </div>
+      <div class="person">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="avatar"><img src="https://placehold.co/128x128/png" alt="Teacher portrait"/></div>
+          <div>
+            <strong>Mr. Ramesh Thapa</strong>
+            <div class="muted" style="color:var(--muted); font-size:14px;">Science • Grade 6–9</div>
+          </div>
+        </div>
+        <p style="margin-top:10px; color:var(--muted);">Hands‑on labs, safe experiments, and real‑world connections to spark wonder.</p>
+      </div>
+      <div class="person">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="avatar"><img src="https://placehold.co/128x128/png" alt="Teacher portrait"/></div>
+          <div>
+            <strong>Ms. Sita Adhikari</strong>
+            <div class="muted" style="color:var(--muted); font-size:14px;">English • Grade 6–10</div>
+          </div>
+        </div>
+        <p style="margin-top:10px; color:var(--muted);">Literature circles, debate clubs, and joyful writing workshops.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery" class="section" data-reveal>
+    <h2>Campus Life</h2>
+    <p class="lead">A glimpse of learning, laughter, and leadership.</p>
+    <div class="gallery">
+      <img src="https://placehold.co/600x400/png" alt="Assembly"/>
+      <img src="https://placehold.co/600x400/png" alt="Library"/>
+      <img src="https://placehold.co/600x400/png" alt="Computer Lab"/>
+      <img src="https://placehold.co/600x400/png" alt="Sports Ground"/>
+      <img src="https://placehold.co/600x400/png" alt="Science Lab"/>
+      <img src="https://placehold.co/600x400/png" alt="Cultural Program"/>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="get-started" class="cta-band" data-reveal>
+    <div>
+      <h3 style="margin:0 0 6px;">Ready to digitize your campus?</h3>
+      <div style="color:var(--bg-2); filter:brightness(140%); opacity:.9">Let us set up a personalized portal for your school in days, not months.</div>
+    </div>
+    <div class="actions">
+      <a class="btn brand" href="#contact">Book a Demo</a>
+      <a class="btn" href="#">Download Brochure</a>
+    </div>
+  </section>
+
+  <!-- Contact / Footer -->
+  <section id="contact" class="section" data-reveal>
+    <h2>Contact</h2>
+    <div class="grid" style="grid-template-columns: 1.2fr .8fr;">
+      <form class="card" onsubmit="event.preventDefault(); alert('Thanks! We\'ll get back to you soon.');">
+        <h3 style="margin:0 0 10px;">Send us a message</h3>
+        <label>Name<br><input required style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:#0c1330; color:var(--text);"/></label>
+        <br>
+        <label>Email<br><input required type="email" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:#0c1330; color:var(--text);"/></label>
+        <br>
+        <label>Message<br><textarea rows="4" required style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:#0c1330; color:var(--text);"></textarea></label>
+        <br>
+        <button class="btn brand" type="submit">Send</button>
+      </form>
+      <div class="card">
+        <h3 style="margin:0 0 10px;">Our Address</h3>
+        <p class="lead">EduFlow HQ, Bharatpur‑10, Chitwan<br>Phone: +977‑1‑555‑1234<br>Email: hello@eduflow.school</p>
+        <div style="height:200px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:linear-gradient(180deg, rgba(124,92,255,.25), rgba(25,195,255,.25)); display:grid; place-items:center; color:#0b1021; font-weight:800;">
+          Map Placeholder
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot">
+      <div>© <span id="year"></span> EduFlow School Management System</div>
+      <div>Privacy • Terms • Support</div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const burger = document.getElementById('burgerBtn');
+    const menu = document.getElementById('mainMenu');
+    burger.addEventListener('click', () => {
+      const open = !menu.classList.contains('open');
+      menu.classList.toggle('open');
+      burger.setAttribute('aria-expanded', String(open));
+    });
+
+    // Year in footer
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Scroll reveal
+    const revealEls = document.querySelectorAll('[data-reveal]');
+    const io = new IntersectionObserver((entries)=>{
+      for(const e of entries){ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } }
+    },{ threshold:.12 });
+    revealEls.forEach(el=> io.observe(el));
+
+    // Animated counters
+    function animateCount(el){
+      const target = Number(el.getAttribute('data-count')) || 0;
+      const isPercent = el.textContent.includes('%') || el.getAttribute('data-count').includes('%');
+      let start = 0; const steps = 60; let i = 0;
+      const inc = Math.max(1, Math.ceil(target/steps));
+      const tick = () => {
+        i++; start = Math.min(target, start + inc);
+        el.textContent = isPercent ? start + '%' : start.toLocaleString();
+        if(start < target) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    // Kick off counts when visible
+    const countEls = document.querySelectorAll('[data-count]');
+    const io2 = new IntersectionObserver((entries)=>{
+      for(const e of entries){ if(e.isIntersecting){ animateCount(e.target); io2.unobserve(e.target); } }
+    },{ threshold:.5 });
+    countEls.forEach(el=> io2.observe(el));
+
+    // Smooth scroll for in‑page links
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const id = a.getAttribute('href').slice(1);
+        const tgt = document.getElementById(id);
+        if(tgt){ e.preventDefault(); tgt.scrollIntoView({behavior:'smooth', block:'start'}); }
+      });
+    });
+  </script>
+</body>
+</html>
